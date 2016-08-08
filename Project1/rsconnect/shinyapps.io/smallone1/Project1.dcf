@@ -2,8 +2,8 @@ name: Project1
 account: smallone1
 server: shinyapps.io
 appId: 118976
-bundleId: 526508
+bundleId: 526549
 url: https://smallone1.shinyapps.io/Project1/
-when: 1470644829.60464
+when: 1470649941.72331
 asMultiple: FALSE
 asStatic: FALSE
