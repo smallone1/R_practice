@@ -22,8 +22,8 @@ shinyUI(fluidPage(
                   value = 30),
       numericInput("testin",
                    "test input",
-                   value=20)
-     ,textInput("textInput",
+                   value=20),
+      textInput("textInput",
                 label = h3("text"), 
                value = 10
             )
@@ -32,8 +32,8 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       plotOutput("distPlot"),
-      plotOutput("testplot")
-      ,textOutput("testtext")
+      plotOutput("testplot"),
+      textOutput("testtext")
     )
   )
 ))

@@ -27,6 +27,6 @@ shinyServer(function(input, output) {
   output$testtext <- renderText({    
     #renderPrint("AAA")    
     input$textInput
-    })
+  })
 
 })
