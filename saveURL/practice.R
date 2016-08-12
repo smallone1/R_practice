@@ -4,11 +4,11 @@ library(bitops)
 library(RCurl)
 library(httr)
 
-orgURL = 'https://www.ptt.cc/bbs/movie/index'
+orgURL = 'http://taqm.epa.gov.tw/taqm/tw/'
 #orgURL = 'https://www.ptt.cc/bbs/StupidClown/index.html'
 
-startPage = 500
-endPage = 501
+##startPage = 500
+##endPage = 501
 alldata = data.frame()
 for( i in startPage:endPage)
 {
@@ -30,6 +30,9 @@ for( i in startPage:endPage)
 }
 
 allDate = levels(alldata$date)
+alldata$date
+allDate
+
 res = hist(as.numeric(alldata$date), nclass=length(allDate), axes=F) 
 axis(1, at=1:length(allDate), labels=allDate)
 axis(2, at=1:max(res$counts), labels=1:max(res$counts))

@@ -34,6 +34,7 @@ alldata = data.frame()
     xml = htmlParse(html, encoding = 'utf-8')
     title = xpathSApply(xml,"//map//area[@title]/@title")
     path = xpathSApply(xml,"//map//area[@title]/@href")
+    #psi=xpathSApply(xml,"//map//area[@title]/@href")
     
 #    tempdata = data.frame(title, author, path, date, response)
     tempdata = data.frame(title,path)
