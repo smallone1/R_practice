@@ -14,7 +14,7 @@ part2_url <- "&order=desc&page="
 #放結果字串
 result<-""
 
-for(i in 1:2){#starpage:endpage
+for(i in 1:1){#starpage:endpage
   #第一頁網址
   if(i==1){
     testurl <- part1_url
