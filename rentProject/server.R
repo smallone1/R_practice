@@ -6,101 +6,83 @@
 #
 
 library(shiny)
-source('./TestAndRegression/ReFit.R')
-source('./SVM/TestSVM.R')
-source('./SVM/houseSVM.R')
+library('e1071')
+source('main_prepareData.R')
+
 
 shinyServer(function(input, output, session) {
   
-  selAllhouse <- observeEvent(input$SelectAllhouse, {
-    updateCheckboxGroupInput(session, "houseType", selected = as.character(c(1:5)))
-  })
-  
-  delAllhouse <- observeEvent(input$DelAllhouse, {
-    updateCheckboxGroupInput(session, "houseType", selected = c(""))
-  })
-  
   selAll <- observeEvent(input$SelectAll, {
-    updateCheckboxGroupInput(session,"Type", selected=as.character(c(2:5)))
+    updateCheckboxGroupInput(session,"Retailers", selected=as.character(c(4,9:12)))
   })
   
   delALL <- observeEvent(input$DelAll, {
-    updateCheckboxGroupInput(session,"Type", selected=c(""))
+    updateCheckboxGroupInput(session,"Retailers", selected=c(""))
   })  
   
-  output$allPrices <- renderPlot({
-    
-    typeName = c("date", "EUR", "GBP", "USD", "GOLD")
-    
-    getType = as.numeric(input$Type)
-    
-    if(length(getType) >=1)
-    {
-      subPrice = data.frame(price$date, price[,getType])
-      names(subPrice) = c("date", typeName[getType])
-      
-      mdf <- melt(subPrice, id.vars="date", value.name="Price", variable.name="FX")
-      
-      ggplot(data=mdf, aes(x=date, y=Price, group=FX, colour=FX)) +
-        geom_line() +
-        geom_point( size=1, shape=1, fill="white" )
-    }
-  })
   
   output$regression <- renderPlot({
-    plot(predict, Xpred%*%Beta, type="l", col="red")
-    lines(predict, price$GOLD[predict], col="blue")
-  })
-  
-  output$fxToGold <- renderPlot({
-    fxselect = as.numeric(input$selectFX)
-    subpriceFX <- data.frame(price$GOLD, price[,fxselect])
-    names(subpriceFX) = c("GOLD", "FX")
-    lmresult <- with(subpriceFX, lm(GOLD ~ FX))
-    plot(GOLD ~ FX, data=subpriceFX, main="",
-         xlab="FX",
-         ylab="GOLD")
-    abline(lmresult, lwd=2)
-  })
-  
-  output$fxTest <- renderDataTable({
-    typeName = c("date", "EUR", "GBP", "USD", "GOLD")
-    fxselect = as.numeric(input$selectFX)
-    subpriceFX <- data.frame(price$GOLD, price[,fxselect])
-    names(subpriceFX) = c("GOLD", "FX")
-    testResult = summary(lm(GOLD ~ ., data = subpriceFX ))
-    showName = rbind("Intercept", typeName[fxselect])
-    data.frame(showName, testResult$coefficients)
-  })
-  
-  output$svmResult <- renderDataTable({
-    outTable = data.frame(svm.test)
-    names(outTable) = c("pred", "org", "freq")
-    outTable
-  })
-  
-  output$svmResultHOUSE <- renderPlot({
-    getGarmma = as.numeric(input$SVMPrems)
-    #getGarmma = 0.9
-    svm.model = svm( label ~ ., TrainData, kernal='radial', type = 'eps-regression', cost = 1, gamma = getGarmma, degree = 1, epsilon = 0.001)
-    svm.pred = predict(svm.model, TestData)
+    #fetch the chosen Retailers
+    Retailerselect_n <- as.numeric(input$Retailers)
+    #divide into test data and train data
+    ind <- sample(2, nrow(AllData), replace=TRUE, prob=c(0.9,0.1))
+    ind
+    trainData <- AllData[ind==1,]
+    testData <- AllData[ind==2,]
+    oneV = rep(1, nrow(trainData))
     
-    plot(TestData$label, col="red")
+    #### TRAIN ####
+    # INPUT>>>>>欄位由USER選擇(1:Starbucks,2:cosmed,3:postOffice,4:MRT)
+    X = as.matrix( cbind(oneV, AllData[ind==1,Retailerselect_n]) )
+    # OUTPUT>>>>房租每坪租金
+    Y = as.matrix( AllData[ind==1, 13] )
+    Beta = solve(t(X) %*% X) %*% t(X) %*% Y
+    #plot(1:nrow(trainData), X%*%Beta, type="p", col="red")
+    
+    #### TEST ####
+    oneV = rep(1, nrow(testData))
+    Xpred = as.matrix( cbind(oneV, AllData[ind==2,Retailerselect_n]) )
+    # predict
+    plot(1:nrow(testData), Xpred%*%Beta, type="p", col="red",ylab="每坪租金(元)",xlab="測試資料",sub="紅：預測；藍：測試資料正解")
+    # real
+    lines(1:nrow(testData), AllData[ind==2,13],type="p", col="blue")
+  })
+  
+  output$RentRegression <- renderDataTable({
+    #fetch the chosen Retailers
+    Retailerselect_n <- as.numeric(input$Retailers)
+    subX = AllData[,Retailerselect_n]
+    Y = AllData[,13]
+    subData = data.frame(Y, subX)
+    names(subData) = c("Rent", names(AllData[,Retailerselect_n]))
+    testResult = summary(lm(Rent ~ ., data = subData ))
+    print(testResult$coefficients)
+  })
+  
+  # output$RetailersToRentFarePerSquare <- renderPlot({
+  #   #Retailerselect <- as.vector(input$Retailers)
+  #   Retailerselect_n <- as.numeric(input$Retailers)
+  #   subRent <- data.frame(AllData$FarePerSquare, AllData[,Retailerselect_n])
+  #   names(subRent) = c("rent", names(AllData[,Retailerselect_n]))
+  #   lmresult <- with(subRent, lm(rent ~ .))
+  #   plot(rentFare ~ ., data=subRent, main="",
+  #        xlab="Retailers",
+  #        ylab="rentFare")
+  #   abline(lmresult, lwd=2)
+  # })
+
+  output$svmResult <- renderPlot({
+    degree_user = as.numeric(input$degree)
+    gamma_user = as.numeric(input$gamma)
+    cost_user = as.numeric(input$cost)
+    
+    svm.model = svm( FarePerSquare ~ ., AllData[ind==1,], kernal='radial', type = 'eps-regression', cost = cost_user, gamma = gamma_user, degree = degree_user, epsilon = 0.001)
+    svm.pred = predict(svm.model, AllData[ind==2,])
+
+    plot(AllData[ind==2,13] , col="blue",ylab="每坪租金(元)",xlab="測試資料",sub="紅：預測；藍：測試資料正解")
     par(new=TRUE)
-    plot(svm.pred, col="blue")
+    plot(svm.pred, col="red",ylab="每坪租金(元)",xlab="測試資料",sub="紅：預測；藍：測試資料正解")
     #RMSE = mean( abs(TestData$label - svm.pred) / TestData$label )
   })
   
-  output$houseRegression <- renderDataTable({
-    nameList = c("County", "Type", "Year", "Bed", "Living")
-    getHouseType = as.numeric(input$houseType)
-    print(getHouseType)
-    X[,3] = floor(X[,3] / 10)
-    subX = X[,getHouseType]
-    Y = log(Y)
-    subData = data.frame(Y, subX)
-    names(subData) = c("label", nameList[getHouseType])
-    testResult = summary(lm(label ~ ., data = subData ))
-    print(testResult$coefficients)
-  })
 })

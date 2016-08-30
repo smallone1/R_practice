@@ -6,61 +6,48 @@
 #
 
 library(shiny)
-source('./TestAndRegression/ReFit.R')
-source('./SVM/TestSVM.R')
-source('./SVM/houseSVM.R')
+library('e1071')
 source('main_prepareData.R')
 
-shinyUI(navbarPage("ShopFront rentFare and nearby",
-                   tabPanel("rentFare regression",
+shinyUI(navbarPage("店面租金與附近機能之研究",
+                   tabPanel("迴歸",
                             sidebarLayout(
                               sidebarPanel(
-                                checkboxGroupInput("houseType", label=h2("House Prices and Data"),
-                                                   choices=list("County"=1,
-                                                                "Type"=2,
-                                                                "Year"=3,
-                                                                "Bed"=4,
-                                                                "Living"=5),
-                                                   selected = 1),
-                                actionButton("SelectAllhouse", label = "SelectAll"),
-                                actionButton("DelAllhouse", label = "DelAll")),
-                              mainPanel(
-                                dataTableOutput("houseRegression"))
-                            )),
-                   
-                   tabPanel("house price by SVM",
-                            sidebarLayout(
-                              sidebarPanel(
-                                selectInput("SVMPrems", label = h2("garmma set"),
-                                            choices = list("0.1"=0.1, "0.5"=0.5, "0.9"=0.9))),
-                              mainPanel(
-                                plotOutput("svmResultHOUSE")
-                              )
-                            )),
-                   tabPanel("Regression and Test",
-                            sidebarLayout(
-                              sidebarPanel(
-                                selectInput("selectFX", label = h2("Select FX"), 
-                                            choices = list("EUR" = 2, "GBP" = 3,
-                                                           "USD" = 4)),
-                                checkboxGroupInput("Type", label=h2("Targets"),
-                                                   choices=list("GOLD"=5,
-                                                                "EUR"=2,
-                                                                "GBP"=3,
-                                                                "USD"=4),
-                                                   selected = 2),
+                                checkboxGroupInput("Retailers", label=h2("影響變數"),
+                                                   choices=list("行政區"=4,
+                                                                "Starbucks"=9,
+                                                                "Cosmed"=10,
+                                                                "PostOffice"=11,
+                                                                "MRT"=12),
+                                                   selected = c(4,9:12)),
                                 actionButton("SelectAll", label = "SelectAll"),
                                 actionButton("DelAll", label = "DelAll")),
                               mainPanel(
-                                plotOutput("fxToGold"),
-                                dataTableOutput("fxTest"),
-                                plotOutput("allPrices"),
-                                plotOutput("regression"))
+                                plotOutput("regression"),
+                                dataTableOutput("RentRegression")  
+                              )
+                              
                             )
-                   ),
-                   tabPanel("SVM",
-                            mainPanel(
-                              #plotOutput("svmResultHOUSE")
-                              dataTableOutput("svmResult")
-                            ))
-))
+                   )
+                   ,tabPanel("使用SVM模型估店面租金",
+                            sidebarLayout(
+                              sidebarPanel(
+                                sliderInput("degree", "degree：",
+                                            min = 0,
+                                            max = 10,
+                                            value = 1,step=1),
+                                sliderInput("gamma",
+                                            "gamma：",
+                                            min = 0.01,
+                                            max = 1,
+                                            value = 0.1,step=0.01),
+                                sliderInput("cost",
+                                            "cost:",
+                                            min = 1,
+                                            max = 10,
+                                            value = 1,step=1)),
+                              mainPanel(
+                                plotOutput("svmResult")
+                              )
+                            )
+)))
